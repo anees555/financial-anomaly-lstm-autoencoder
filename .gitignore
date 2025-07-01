@@ -1,0 +1,21 @@
+# Ignore data
+data/*
+!data/.gitkeep
+
+# Ignore outputs
+outputs/*
+!outputs/.gitkeep
+
+# Python junk
+__pycache__/
+*.pyc
+
+# Jupyter notebooks checkpoints
+.ipynb_checkpoints/
+
+# Virtual environments
+venv/
+financeenv/
+
+# OS junk
+.DS_Store
