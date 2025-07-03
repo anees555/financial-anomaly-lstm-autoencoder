@@ -1,34 +1,33 @@
 import torch
-import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
-from src.model import LSTMAutoencoder
+import torch.nn as nn
 
-def train_model(X_train, num_epochs=20, batch_size=64, learning_rate=1e-3):
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    
-    # Prepare dataset
-    X_train_tensor = torch.tensor(X_train, dtype=torch.float32)
-    train_loader = DataLoader(TensorDataset(X_train_tensor), batch_size=batch_size, shuffle=True)
-    
-    # Initialize model
-    model = LSTMAutoencoder(n_features=X_train.shape[2]).to(device)
-    criterion = torch.nn.MSELoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    
-    # Training loop
-    for epoch in range(num_epochs):
-        model.train()
-        epoch_loss = 0
-        for batch in train_loader:
-            seqs = batch[0].to(device)
-            optimizer.zero_grad()
-            outputs = model(seqs)
-            loss = criterion(outputs, seqs)
-            loss.backward()
-            optimizer.step()
-            epoch_loss += loss.item()
+class LSTMAutoencoder(nn.Module):
+    def __init__(self, n_features, embedding_dim=64):
+        super(LSTMAutoencoder, self).__init__()
+        self.n_features = n_features
+        self.embedding_dim = embedding_dim
         
-        avg_loss = epoch_loss / len(train_loader)
-        print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {avg_loss:.6f}")
+        self.encoder = nn.LSTM(
+            input_size=n_features,
+            hidden_size=embedding_dim,
+            num_layers=1,
+            batch_first=True
+        )
         
-    return model
+        self.decoder = nn.LSTM(
+            input_size=embedding_dim,
+            hidden_size=n_features,
+            num_layers=1,
+            batch_first=True
+        )
+        
+    def forward(self, x):
+        # x: [batch_size, seq_length, n_features]
+        _, (hidden, _) = self.encoder(x)
+        
+        # Repeat hidden across sequence length
+        repeated_hidden = hidden.repeat(x.size(1), 1, 1).permute(1,0,2)
+        
+        decoded_output, _ = self.decoder(repeated_hidden)
+        return decoded_output
+
