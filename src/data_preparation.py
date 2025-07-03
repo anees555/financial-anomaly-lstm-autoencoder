@@ -20,7 +20,9 @@ def load_preprocess_data(data_path):
     data_scaled = scaler.fit_transform(finance_data.drop(columns=['Class']))
     labels = finance_data['Class'].values
 
-    return scaler, data_scaled, labels
+    return data_scaled, labels, scaler
+
+
 
 def create_sequences(data, labels, seq_length=10):
     sequences = []
